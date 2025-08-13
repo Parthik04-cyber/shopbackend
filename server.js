@@ -7,6 +7,7 @@ import connectCloudinary from "./config/cloudinary.js";
 import userRouter from "./routes/userRoute.js";
 import productRouter from "./routes/productRoute.js";
 import orderRouter from "./routes/orderRoute.js";
+dotenv.config();
 
 // INFO: Create express app
 const app = express();
@@ -33,3 +34,10 @@ app.get("/", (req, res) => {
 app.listen(port, () =>
   console.log(`Server is running on at http://localhost:${port}`)
 );
+
+const allowedOrigins = [process.env.FRONTEND_URL, "http://localhost:5173"];
+
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true
+}));
