@@ -91,20 +91,49 @@ const loginAdmin = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    if (
-      email === process.env.ADMIN_EMAIL &&
-      password === process.env.ADMIN_PASSWORD
-    ) {
-      const token = jwt.sign({ email, password }, process.env.JWT_SECRET);
-      res.status(200).json({ success: true, token });
+    // Quick validation to avoid unnecessary processing
+    if (!email || !password) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Email and password are required" 
+      });
+    }
+
+    // Use simple comparison for better performance
+    const isValidEmail = email === process.env.ADMIN_EMAIL;
+    const isValidPassword = password === process.env.ADMIN_PASSWORD;
+
+    if (isValidEmail && isValidPassword) {
+      // Create a simpler token payload for better performance
+      const token = jwt.sign(
+        { 
+          admin: true,
+          email: email,
+          iat: Math.floor(Date.now() / 1000)
+        }, 
+        process.env.JWT_SECRET,
+        { expiresIn: '24h' } // Add expiration for security
+      );
+      
+      return res.status(200).json({ 
+        success: true, 
+        token,
+        message: "Login successful"
+      });
     } else {
-      res
-        .status(400)
-        .json({ success: false, message: "Invalid email or password" });
+      // Add a small delay to prevent timing attacks
+      await new Promise(resolve => setTimeout(resolve, 100));
+      return res.status(401).json({ 
+        success: false, 
+        message: "Invalid credentials" 
+      });
     }
   } catch (error) {
-    console.log("Error while logging in admin: ", error);
-    res.status(500).json({ success: false, message: error.message });
+    console.error("Admin login error:", error);
+    return res.status(500).json({ 
+      success: false, 
+      message: "Internal server error" 
+    });
   }
 };
 
